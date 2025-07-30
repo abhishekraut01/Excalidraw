@@ -11,11 +11,10 @@ export interface CustomRequest extends Request {
 import {
   loginValidationSchema,
   signUpvalidationSchema,
-} from '@validation/validation';
+} from '@repo/validations';
 import ApiError from '../utils/ApiError';
 import ApiResponse from '../utils/ApiResponse';
-import { ObjectId } from 'mongoose';
-import uploadOnCloudinary from '../utils/Cloudinary';
+
 
 export const userSignUp = asyncHandler(async (req: Request, res: Response) => {
   const validationResult = signUpvalidationSchema.safeParse(req.body);

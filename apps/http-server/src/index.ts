@@ -1,8 +1,7 @@
 // index.ts
 import dotenv from 'dotenv';
 import path from 'path';
-import { server } from './utils/Socket';
-import { connectDB } from './db/connectDb';
+
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 

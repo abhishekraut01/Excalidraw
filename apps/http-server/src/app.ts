@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import path from 'path';
 import cookieParser from 'cookie-parser';
-import errorHandler from './middlewares/globelErrorhandler.middleware';
+import errorHandler from './middleware/globelErrorHandler.middleware';
 import ApiError from './utils/ApiError';
 
 // Load environment variables
@@ -14,20 +14,11 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 // Create Express app
 const app: Application = express();
 
-const allowedOrigins = process.env.ALLOW_ORIGIN?.split(',') || ["https://chat-app-851o.onrender.com"];
+const allowedOrigins = process.env.ALLOW_ORIGIN || "http://localhost:3000";
 
 app.use(
   cors({
-    origin: function(origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if(!origin) return callback(null, true);
-      
-      if(allowedOrigins.indexOf(origin) === -1) {
-        const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-        return callback(new Error(msg), false);
-      }
-      return callback(null, true);
-    },
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"]
@@ -41,10 +32,8 @@ app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ limit: '5mb', extended: true }));
 
 // Import and use routes
-import authRoute from './routes/auth.routes';
-import messageRoutes from './routes/message.routes';
-app.use('/api/v1/auth', authRoute);
-app.use('/api/v1/message', messageRoutes);
+import authRoutes from './routes/auth.routes';
+app.use('/api/v1/auth', authRoutes);    
 
 // 404 Handler
 app.use((req: Request, res: Response, next: NextFunction) => {
