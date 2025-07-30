@@ -8,12 +8,23 @@ export interface CustomRequest extends Request {
   };
 }
 
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+const JWT_SECRET = process.env.JWT_SECRET || 'default-secret';
+
+const generateAccessToken = (userId: string) => {
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7h' });
+};
+
+
+
 import {
   loginValidationSchema,
   signUpvalidationSchema,
 } from '@repo/validations';
 import ApiError from '../utils/ApiError';
 import ApiResponse from '../utils/ApiResponse';
+import prisma from '@repo/db/client';
 
 
 export const userSignUp = asyncHandler(async (req: Request, res: Response) => {
@@ -24,7 +35,7 @@ export const userSignUp = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(
       400,
       'Invalid User Input Schema',
-      validationResult.error.errors
+      validationResult.error.flatten().fieldErrors as any[]
     );
   }
 
@@ -32,8 +43,10 @@ export const userSignUp = asyncHandler(async (req: Request, res: Response) => {
 
   //step 2 - check that if user already exist or not
 
-  const isUserExist = await User.findOne({
-    $or: [{ username }, { email }],
+  const isUserExist = await prisma.user.findFirst({
+    where: {
+      OR: [{ username }, { email }]
+    }
   });
 
   if (isUserExist) {
@@ -41,23 +54,33 @@ export const userSignUp = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Step 5: Create and save the user
-  const newUser = await User.create({
-    username: username.toLowerCase(),
-    email: email.toLowerCase(),
-    password,
-    avatar: '',
+  const newUser = await prisma.user.create({
+    data: {
+      username: username.toLowerCase(),
+      email: email.toLowerCase(),
+      password,
+    }
   });
 
   // Step 6: Remove sensitive fields for the response
-  const createdUser = await User.findById(newUser._id).select(
-    '-password -refreshToken -resetPasswordToken -resetPasswordExpires'
-  );
+  const createdUser = await prisma.user.findUnique({
+    where: {
+      id: newUser.id
+    },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+    }
+  });
 
   if (!createdUser) {
     throw new ApiError(500, 'Error while creating user');
   }
 
-  const accessToken = await createdUser.generateAccessToken();
+  // Step 7: Generate access token
+
+  const accessToken =  generateAccessToken(createdUser.id);
 
   // Step 7: Return response
 
@@ -86,7 +109,7 @@ export const userLogin = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(
       400,
       'Invalid User Input Schema',
-      validationResult.error.errors
+      validationResult.error.flatten().fieldErrors as any[]
     );
   }
 
@@ -101,8 +124,10 @@ export const userLogin = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Step 2: Check if user exists in the database
-  const userExist = await User.findOne({
-    email,
+  const userExist = await prisma.user.findUnique({
+    where: {
+      email
+    }
   });
 
   if (!userExist) {
@@ -110,7 +135,7 @@ export const userLogin = asyncHandler(async (req: Request, res: Response) => {
   }
 
   // Step 3: Check if the password is correct
-  const isPasswordCorrect: boolean = await userExist.isPasswordValid(password);
+  const isPasswordCorrect: boolean = await bcrypt.compare(password, userExist.password);
 
   if (!isPasswordCorrect) {
     throw new ApiError(401, 'Password is incorrect');
@@ -118,11 +143,18 @@ export const userLogin = asyncHandler(async (req: Request, res: Response) => {
 
   // Step 4 : generate access and refresh tokens
 
-  const accessToken = await userExist.generateAccessToken();
+  const accessToken = generateAccessToken(userExist.id);
 
-  const userResponse = await User.findById(userExist._id).select(
-    '-password -refreshToken'
-  );
+  const userResponse = await prisma.user.findUnique({
+    where: {
+      id: userExist.id
+    },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+    }
+  });
 
   if (!userResponse) {
     throw new ApiError(500, 'Error while fetching user data');
@@ -147,18 +179,14 @@ export const userLogin = asyncHandler(async (req: Request, res: Response) => {
     .json(
       new ApiResponse(200, 'Login successful', {
         accessToken,
-        user: userResponse.toObject({
-          getters: true,
-          virtuals: false,
-          versionKey: false,
-        }),
+        user: userResponse,
       })
     );
 });
 
 export const userLogout = asyncHandler(
   async (req: CustomRequest, res: Response) => {
-    const UserId: string | ObjectId | undefined = req.user?._id;
+    const UserId: string | any = req.user?._id;
 
     if (!UserId) {
       throw new ApiError(401, 'User Id not found');
@@ -177,46 +205,6 @@ export const userLogout = asyncHandler(
   }
 );
 
-export const updateProfile = asyncHandler(
-  async (req: CustomRequest, res: Response) => {
-    const userId = req.user?._id;
-    if (!userId) {
-      throw new ApiError(401, 'Unauthorized access');
-    }
-
-    const localAvatarPath = req.file?.path;
-    if (!localAvatarPath) {
-      throw new ApiError(400, 'Avatar file is required');
-    }
-
-    try {
-      // Upload image to Cloudinary
-      const avatar = await uploadOnCloudinary(localAvatarPath);
-      if (!avatar) {
-        throw new ApiError(500, 'Error uploading avatar file');
-      }
-
-      // Update user with the new avatar
-      const updatedUser = await User.findByIdAndUpdate(
-        userId,
-        { avatar: avatar.url },
-        { new: true, select: '-password' } // Exclude password from response
-      );
-
-      if (!updatedUser) {
-        throw new ApiError(500, 'Error updating avatar');
-      }
-
-      return res
-        .status(200)
-        .json(new ApiResponse(200, 'Avatar updated successfully', updatedUser));
-    } catch (error) {
-      // Cleanup local file on error to prevent memory leak
-      await fs.unlink(localAvatarPath).catch(() => {});
-      throw error; // Forward to global error handler
-    }
-  }
-);
 
 export const getUser = asyncHandler(
   async (req: CustomRequest, res: Response) => {

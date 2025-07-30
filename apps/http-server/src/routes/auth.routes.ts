@@ -1,7 +1,6 @@
 import express, { Router } from 'express';
 import {
   getUser,
-  updateProfile,
   userLogin,
   userLogout,
   userSignUp,
@@ -15,10 +14,6 @@ router.route('/signup').post(userSignUp);
 router.route('/login').post(userLogin);
 router.route('/logout').post(authMiddleware, userLogout);
 router.route('/getuser').get(authMiddleware, getUser);
-
-
-router.route('/updateProfile').patch(authMiddleware, updateProfile);
-
 
 
 export default router;

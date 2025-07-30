@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import ApiError from '../utils/ApiError';
 import jwt from 'jsonwebtoken';
+import prisma from '@repo/db/client';
 
 
 interface CustomRequest extends Request{
@@ -36,9 +37,11 @@ const authMiddleware = async (
       throw new ApiError(401, 'Invalid token: User ID missing.');
     }
 
-    const user = await User.findById(decode._id).select(
-      '-password '
-    );
+    const user = await prisma.user.findUnique({
+      where: {
+        id: decode._id
+      }
+    });
 
     if (!user) {
       throw new ApiError(404, 'User not found');

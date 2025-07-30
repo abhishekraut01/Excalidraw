@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./dist/validationSchema.js"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
