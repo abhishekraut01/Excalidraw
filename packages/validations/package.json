@@ -9,6 +9,7 @@
     "build": "tsc"
   },
   "keywords": [],
+  "type": "module",
   "author": "",
   "license": "ISC",
   "exports": {

@@ -33,21 +33,31 @@ const authMiddleware = async (
 
     const decode = jwt.verify(token, secretKey) as jwt.JwtPayload;
 
-    if (!decode._id) {
+    if (!decode.userId) {
       throw new ApiError(401, 'Invalid token: User ID missing.');
     }
 
-    const user = await prisma.user.findUnique({
+    //update user online status
+    const updatedUser = await prisma.user.update({
       where: {
-        id: decode._id
-      }
+        id: decode.userId
+      },
+      data: { isOnline: true },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+        isOnline: true,
+      },
     });
 
-    if (!user) {
+    if (!updatedUser) {
       throw new ApiError(404, 'User not found');
     }
 
-    req.user = user;
+    req.user = updatedUser;
     next();
   } catch (error) {
     next(error);
