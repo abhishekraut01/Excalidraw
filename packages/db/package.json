@@ -1,22 +1,26 @@
 {
-  "name": "db",
+  "name": "@repo/db",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "dev": "tsc --watch"
   },
   "keywords": [],
-  "exports": {
-    ".": "./dist/index.js"
-  },
   "author": "",
   "license": "ISC",
+  "exports": {
+    "./client": "./dist/index.js"
+  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "prisma": "^6.13.0"
+    "@prisma/client": "6.13.0",
+    "prisma": "^6.12.0"
   }
 }
