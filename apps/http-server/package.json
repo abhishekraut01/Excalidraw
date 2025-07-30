@@ -14,6 +14,7 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@repo/validations": "workspace:*",
+    "@repo/db": "workspace:*",
     "@types/cookie-parser": "^1.4.9",
     "@types/cors": "^2.8.19",
     "typescript": "^5.8.3"
