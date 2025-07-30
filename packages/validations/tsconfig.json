@@ -1,7 +1,10 @@
 {
-  "extends":"@repo/typescript-config/base.json",
+  "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true
   }
 }
