@@ -1,33 +1,20 @@
-import express from "express"
-const app = express()
-const PORT = 4000
+// index.ts
+import dotenv from 'dotenv';
+import path from 'path';
+import { server } from './utils/Socket';
+import { connectDB } from './db/connectDb';
 
-app.use(express.json())
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-app.get('/signup' , (req,res)=>{
-    const {username , password} = req.body
-
-    if(!username || !password){
-        res.json({
-            success:false,
-            
-        })
-    }
-})
-
-
-app.get('/signin' , (req,res)=>{
-    res.json({
-        message:"hello"
-    })
-})
-
-app.get('/create-room' , (req,res)=>{
-    res.json({
-        message:"hello"
-    })
-})
-
-app.listen(PORT , ()=>{
-    console.log( `server is on in port ${PORT}`)
-})
+// Start the server after successful DB connection
+connectDB()
+  .then(() => {
+    const PORT = process.env.PORT || 5000;
+    server.listen(PORT, () => {
+      console.log(`🚀 Server started on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error(`❌ Error connecting to the database: ${err.message}`);
+    process.exit(1);
+  });
