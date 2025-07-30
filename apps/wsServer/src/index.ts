@@ -14,6 +14,12 @@ const checkLogin = (token: string): jwt.JwtPayload | false => {
   return decoded;
 };
 
+interface UserInfo {
+  userId: string;
+  ws: WebSocket;
+}
+
+const users : UserInfo[] = []
 wss.on('connection', function connection(ws, req) {
   ws.on('error', console.error);
 
@@ -29,9 +35,12 @@ wss.on('connection', function connection(ws, req) {
     return;
   } 
 
+
+
   ws.on('message', function message(data) {
     console.log('received: %s', data);
   });
 
   ws.send('something');
+
 });
