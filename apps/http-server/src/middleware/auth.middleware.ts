@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import ApiError from '../utils/ApiError';
 import jwt from 'jsonwebtoken';
-import User from '../models/user.model';
+
 
 interface CustomRequest extends Request{
   user?:any

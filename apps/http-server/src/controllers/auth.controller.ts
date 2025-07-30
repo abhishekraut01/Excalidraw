@@ -4,7 +4,7 @@ import { asyncHandler } from '../utils/AsyncHandler';
 
 export interface CustomRequest extends Request {
   user?: {
-    _id: string | ObjectId;
+    _id: string | any;
   };
 }
 
