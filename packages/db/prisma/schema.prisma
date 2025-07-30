@@ -7,12 +7,36 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model user{
-  id String @id @default(uuid())
-  username String @unique
-  email String @unique
-  password String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isBlocked Boolean @default(false)
+model User {
+  id         String    @id @default(uuid())
+  username   String    @unique
+  email      String    @unique
+  password   String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  isOnline   Boolean   @default(false)
+  rooms      Room[]    @relation("RoomMembers")
+  messages   Message[] @relation("UserMessages")
+  adminRooms Room[]    @relation("AdminRooms")
+}
+
+model Room {
+  id         Int       @id @default(autoincrement())
+  slug       String    @unique
+  createdAt  DateTime  @default(now())
+  adminId    String
+  admin      User      @relation("AdminRooms", fields: [adminId], references: [id], onDelete: Cascade)
+  messages   Message[] @relation("RoomMessages")
+  members    User[]    @relation("RoomMembers")
+}
+
+
+model Message {
+  id         String    @id @default(uuid())
+  content    String
+  createdAt  DateTime  @default(now())
+  roomId     Int
+  userId     String
+  room       Room      @relation("RoomMessages", fields: [roomId], references: [id])
+  user       User      @relation("UserMessages", fields: [userId], references: [id], onDelete: Cascade)
 }
