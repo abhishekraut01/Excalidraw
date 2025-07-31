@@ -9,26 +9,29 @@ const wss = new WebSocketServer({
 });
 console.log(`ws server is running on port 9000`);
 
-const checkAuth = (token: string): JwtPayload | boolean => {
-  if (!token) return false;
-
+const checkAuth = (token: string): JwtPayload | null => {
   try {
-    const secretKey = process.env.ACCESS_TOKEN_SECRET;
-
-    if (!secretKey) {
-      return false;
+    const decoded = jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_SECRET as string
+    ) as jwt.JwtPayload;
+    if (!decoded.userId) {
+      return null;
     }
-
-    const decode = jwt.verify(token, secretKey) as jwt.JwtPayload;
-    if (!decode.userId) {
-      return false;
-    }
-    return decode;
+    return decoded;
   } catch (error) {
     console.log("JWT Verification Failed:", error);
-    return false;
+    return null;
   }
 };
+
+interface IUser {
+  userId: string;
+  rooms: string[];
+  ws: WebSocket;
+}
+
+const users: IUser[] = [];
 
 wss.on("connection", (socket, req) => {
   const url = new URL(req.url!, `http://${req.headers.host}`);
@@ -45,5 +48,11 @@ wss.on("connection", (socket, req) => {
     return;
   }
 
-  socket.on("message", () => {});
+  users.push({
+    userId: decoded.userId,
+    rooms: [],
+    ws: socket as unknown as WebSocket,
+  });
+
+
 });
