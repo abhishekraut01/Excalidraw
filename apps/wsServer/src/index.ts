@@ -38,10 +38,13 @@ wss.on("connection", (socket, req) => {
     if (parsedMessage.type === "join") {
       const { roomId } = parsedMessage.data;
 
-      if (!roomId || !message) {
+      // Validate roomId
+      if (!roomId) {
         socket.close();
+        return;
       }
 
+      // Find the user who sent the request
       const user = users.find((u) => u.ws === (socket as unknown as WebSocket));
 
       if (!user) {
@@ -49,7 +52,20 @@ wss.on("connection", (socket, req) => {
         return;
       }
 
-      user.rooms.push(roomId);
+      // Add user to the room if not already in it
+      if (!user.rooms.includes(roomId)) {
+        user.rooms.push(roomId);
+        console.log(`User ${user.userId} joined room ${roomId}`);
+        user.ws.send(
+          JSON.stringify({
+            type: "joined-room",
+            data: {
+              roomId,
+              message: `Successfully joined room: ${roomId}`,
+            },
+          })
+        );
+      }
     }
 
     if (parsedMessage.type === "chat") {
