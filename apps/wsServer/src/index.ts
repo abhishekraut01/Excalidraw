@@ -1,46 +1,49 @@
-import { WebSocketServer } from 'ws';
-import jwt from 'jsonwebtoken';
+import { WebSocketServer } from "ws";
+import dotenv from "dotenv";
+dotenv.config();
+import jwt from "jsonwebtoken";
+import { JwtPayload } from "jsonwebtoken";
 
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({
+  port: 9000,
+});
+console.log(`ws server is running on port 9000`);
 
-const checkLogin = (token: string): jwt.JwtPayload | false => {
-  if (!token) {
+const checkAuth = (token: string): JwtPayload | boolean => {
+  if (!token) return false;
+
+  try {
+    const secretKey = process.env.ACCESS_TOKEN_SECRET;
+
+    if (!secretKey) {
+      return false;
+    }
+
+    const decode = jwt.verify(token, secretKey) as jwt.JwtPayload;
+    if (!decode.userId) {
+      return false;
+    }
+    return decode;
+  } catch (error) {
+    console.log("JWT Verification Failed:", error);
     return false;
   }
-  const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as string) as jwt.JwtPayload;
-  if (!decoded.userId) {
-    return false;
-  }
-  return decoded;
 };
 
-interface UserInfo {
-  userId: string;
-  ws: WebSocket;
-}
+wss.on("connection", (socket, req) => {
+  const url = new URL(req.url!, `http://${req.headers.host}`);
+  const token = url.searchParams.get("token");
 
-const users : UserInfo[] = []
-wss.on('connection', function connection(ws, req) {
-  ws.on('error', console.error);
-
-  const token = req.headers.cookie;
   if (!token) {
-    ws.close();
+    socket.close();
     return;
   }
 
-  const decoded = checkLogin(token);
+  const decoded = checkAuth(token);
   if (!decoded) {
-    ws.close();
+    socket.close();
     return;
-  } 
+  }
 
-
-
-  ws.on('message', function message(data) {
-    console.log('received: %s', data);
-  });
-
-  ws.send('something');
-
+  socket.on("message", () => {});
 });
