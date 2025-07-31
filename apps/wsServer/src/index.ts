@@ -54,5 +54,40 @@ wss.on("connection", (socket, req) => {
     ws: socket as unknown as WebSocket,
   });
 
+  socket.on("message", (message) => {
+    const parsedMessage = JSON.parse(message as unknown as string);
 
+    if (parsedMessage.type === "join") {
+      const { roomId, message } = parsedMessage.data;
+
+      if (!roomId || !message) {
+        socket.close();
+      }
+
+      const user = users.find(
+        (u) => u.ws === (socket as unknown as WebSocket)
+      );
+
+      if (!user) {
+        socket.close();
+        return;
+      }
+
+      user.rooms.push(roomId)
+    }
+
+    if (parsedMessage.type === "chat") {
+      const { roomId, message } = parsedMessage.data;
+      if (!roomId || !message) {
+        socket.close();
+      }
+    }
+
+    if (parsedMessage.type === "leave-room") {
+      const { roomId, message } = parsedMessage.data;
+      if (!roomId || !message) {
+        socket.close();
+      }
+    }
+  });
 });
