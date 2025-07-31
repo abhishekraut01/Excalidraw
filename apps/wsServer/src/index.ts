@@ -53,7 +53,41 @@ wss.on("connection", (socket, req) => {
     }
 
     if (parsedMessage.type === "chat") {
-     
+      const { roomId, message } = parsedMessage.data;
+
+      if (!roomId || !message) {
+        socket.close();
+        return;
+      }
+
+      const user = users.find((u) => u.ws === (socket as unknown as WebSocket));
+
+      if (!user) {
+        socket.close();
+        return;
+      }
+
+      const usersInSameRoom = users.filter((u) => u.rooms.includes(roomId));
+
+      const payload = JSON.stringify({
+        type: "chat",
+        data: {
+          sender: user.userId,
+          roomId,
+          message,
+          timestamp: Date.now(),
+        },
+      });
+
+      usersInSameRoom.forEach((u) => {
+        if (u.ws.readyState === WebSocket.OPEN) {
+          try {
+            u.ws.send(payload);
+          } catch (err) {
+            console.error("Error sending message:", err);
+          }
+        }
+      });
     }
 
     if (parsedMessage.type === "leave-room") {
