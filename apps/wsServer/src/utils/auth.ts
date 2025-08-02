@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { JwtPayload } from "jsonwebtoken";
 
 
+
 export const checkAuth = (token: string): JwtPayload | null => {
   try {
     const decoded = jwt.verify(
@@ -22,8 +23,8 @@ export const checkAuth = (token: string): JwtPayload | null => {
  * Helper function to safely send JSON messages to a WebSocket
  * Prevents crashes if the socket is closed or in an invalid state
  */
-export const safeSend = (ws: WebSocket, data: any) => {
-  if (ws.readyState === WebSocket.OPEN) {
+export const safeSend = (ws: any, data: any) => {
+  if (ws.readyState === 1) { // 1 = OPEN state
     try {
       ws.send(JSON.stringify(data));
     } catch (err) {
@@ -31,4 +32,5 @@ export const safeSend = (ws: WebSocket, data: any) => {
     }
   }
 };
+
 

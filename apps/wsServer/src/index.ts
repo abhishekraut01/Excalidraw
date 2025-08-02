@@ -208,6 +208,8 @@ function handleJoinRoom(user: IUser, data: any) {
 function handleChatMessage(user: IUser, data: any) {
   const { roomId, message } = data;
 
+  console.log(roomId)
+  console.log(message)
   // Validate required fields
   if (!roomId || !message) {
     safeSend(user.ws, {
