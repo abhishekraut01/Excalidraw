@@ -1,8 +1,6 @@
 import jwt from "jsonwebtoken";
 import { JwtPayload } from "jsonwebtoken";
 
-
-
 export const checkAuth = (token: string): JwtPayload | null => {
   try {
     const decoded = jwt.verify(

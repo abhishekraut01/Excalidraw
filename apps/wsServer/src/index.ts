@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import dotenv from "dotenv";
-import { checkAuth, safeSend } from "./utils/auth";
+import { checkAuth, safeSend } from "./utils";
 import { IUser } from "./types";
 
 // Load environment variables from .env file
